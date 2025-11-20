@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Un regalo para ti</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --accent:#ff5c8a; --muted:#9aa4b2; --glass: rgba(255,255,255,0.04);
+      --radius:18px; --maxw:820px;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    html,body{height:100%;margin:0}
+    body{
+      background: radial-gradient(1200px 600px at 10% 10%, rgba(255,92,138,0.07), transparent),
+                  radial-gradient(1000px 500px at 90% 90%, rgba(99,102,241,0.05), transparent),
+                  var(--bg);
+      color:#e6eef8; display:flex; align-items:center; justify-content:center; padding:32px;
+    }
+    .card{
+      width:100%; max-width:var(--maxw); background:linear-gradient(180deg,var(--card), rgba(255,255,255,0.02));
+      border-radius:var(--radius); padding:36px; box-shadow: 0 10px 40px rgba(2,6,23,0.6); position:relative; overflow:hidden;
+    }
+    header{display:flex; gap:20px; align-items:center}
+    .avatar{width:84px;height:84px;border-radius:16px;background:linear-gradient(135deg,var(--accent), #6347ff);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:28px;box-shadow: 0 6px 24px rgba(99,71,255,0.14)}
+    h1{margin:0;font-size:24px}
+    p.lead{margin:6px 0 0;color:var(--muted)}
+
+    .message{
+      margin-top:26px; background:var(--glass); padding:22px; border-radius:12px; min-height:140px; display:flex; align-items:center; justify-content:center; text-align:center; font-size:18px; line-height:1.4;
+    }
+    .controls{display:flex; gap:12px; justify-content:center; margin-top:18px}
+    button{background:transparent;border:1px solid rgba(255,255,255,0.06); padding:10px 16px; border-radius:12px; color:inherit; cursor:pointer; font-weight:600}
+    .primary{background:linear-gradient(90deg,var(--accent),#7c6bff); border:0; box-shadow:0 8px 30px rgba(255,92,138,0.14)}
+    .accept{background:linear-gradient(90deg,#4ade80,#16a34a);}
+    .decline{background:transparent;border:1px solid rgba(255,255,255,0.08);}
+
+    .typewriter{font-family: Georgia, 'Times New Roman', serif; font-size:20px}
+    .small{font-size:13px;color:var(--muted);text-align:center;margin-top:10px}
+
+    /* footer */
+    footer{display:flex;justify-content:space-between;align-items:center;margin-top:20px;color:var(--muted);font-size:13px}
+
+    /* hearts */
+    .hearts{position:absolute;right:18px;top:18px;opacity:0.14}
+
+    /* responsive */
+    @media (max-width:520px){ .card{padding:20px} h1{font-size:20px} .message{font-size:16px}}
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-labelledby="title">
+    <div class="hearts">❤️❤️</div>
+    <header>
+      <div class="avatar" aria-hidden="true">T</div>
+      <div>
+        <h1 id="title">Un momento — solo para ti</h1>
+        <p class="lead">Un pequeño regalo para decir cosas que a veces es difícil decir cara a cara.</p>
+      </div>
+    </header>
+
+    <div id="message" class="message" aria-live="polite">
+      <div>
+        <div id="intro" class="typewriter">Hola — si estás leyendo esto, gracias por abrirlo.</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="revealBtn" class="primary">Leer mi verdad</button>
+      <button id="playBtn">Reproducir canción</button>
+      <button id="downloadBtn">Descargar</button>
+    </div>
+
+    <div id="choices" style="display:none; margin-top:14px; text-align:center">
+      <p class="small">Si te llega al corazón, puedes elegir:</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:8px">
+        <button id="acceptBtn" class="accept">Quiero intentarlo</button>
+        <button id="declineBtn" class="decline">Necesito tiempo</button>
+      </div>
+    </div>
+
+    <footer>
+      <div>Con cariño, <strong>Tú</strong></div>
+      <div class="small">Hazlo tuyo: cambia nombre, colores o mensajes.</div>
+    </footer>
+  </div>
+
+  <!-- canvas para confetti -->
+  <canvas id="confettiCanvas" style="position:fixed;left:0;top:0;pointer-events:none;z-index:9999"></canvas>
+
+  <audio id="song" preload="auto">
+    <!-- Puedes reemplazar el src por una canción tuya (archivo mp3 al lado del HTML) -->
+    <source src="dile-de-pesado.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // --- Tipo "typewriter" simple
+    const revealBtn = document.getElementById('revealBtn');
+    const intro = document.getElementById('intro');
+    const message = document.getElementById('message');
+    const choices = document.getElementById('choices');
+    const song = document.getElementById('song');
+
+    const confession = [
+      "Necesito decirte lo que siento. Ya no me cabe en silencio. Trato de actuar normal y no lo logro. Tú entraste en un lugar real dentro de mí.",
+      "Me enamoré de ti. No es ligero. No lo ignoro. Tú me mueves, me calmas, me emocionas y me haces sentir entendido.",
+      "Quiero que lo tengas claro. Quiero estar contigo. No tengo duda.",
+      "Lo que me detiene no es querer quedarme donde estoy. Ya no estoy ahí por dentro. Lo que me detiene es que busco cerrar esa etapa sin causar caos. No quiero meterte en un problema que no te pertenece.",
+      "Quiero que entiendas algo. No estás en segundo lugar. Nunca lo has estado. Busco terminar bien porque quiero llegar a ti sin cargas. No quiero que sientas que te escogí por salir de algo. No quiero que vivas dudas que no te tocan.",
+      "Te elegiría sin pensarlo. Solo ordeno lo necesario para avanzar hacia ti con claridad, sin mentiras y sin sombras.",
+      "No quiero perder lo que estamos formando. No quiero que pienses que te suelto. Estoy haciendo lo posible para llegar bien a ti."
+    ];
+
+    function typeWriter(lines, container, speed = 24){
+      container.textContent = '';
+      let i=0, j=0;
+      function step(){
+        if(i>=lines.length) return finish();
+        const line = lines[i];
+        if(j < line.length){
+          container.textContent += line[j++];
+          setTimeout(step, speed);
+        } else {
+          container.textContent += '\n\n';
+          i++; j=0;
+          setTimeout(step, 500);
+        }
+      }
+      function finish(){
+        choices.style.display = 'block';
+      }
+      step();
+    }
+
+    revealBtn.addEventListener('click', ()=>{
+      typeWriter(confession, intro, 28);
+      startConfetti(180);
+      revealBtn.disabled = true;
+    });
+
+    // simple confetti (particle) system
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    let W = canvas.width = window.innerWidth;
+    let H = canvas.height = window.innerHeight;
+    window.addEventListener('resize', ()=>{ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; });
+
+    let particles = [];
+    function rand(min,max){return Math.random()*(max-min)+min}
+    function startConfetti(count=120){
+      for(let i=0;i<count;i++){
+        particles.push({x:rand(0,W), y:rand(-H,0), vx:rand(-1.5,1.5), vy:rand(1,4), r:rand(6,11), rot:rand(0,360), vr:rand(-6,6) });
+      }
+      if(!animating) animate();
+    }
+
+    function drawParticle(p){
+      ctx.save();
+      ctx.translate(p.x,p.y); ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = 'rgba(255,92,138,0.92)';
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6);
+      ctx.restore();
+    }
+
+    let animating = false;
+    function animate(){
+      animating = true;
+      ctx.clearRect(0,0,W,H);
+      for(let i=particles.length-1;i>=0;i--){
+        const p = particles[i];
+        p.x += p.vx; p.y += p.vy; p.rot += p.vr*0.7; p.vy += 0.02; // gravity
+        drawParticle(p);
+        if(p.y > H + 20) particles.splice(i,1);
+      }
+      if(particles.length>0) requestAnimationFrame(animate); else animating=false;
+    }
+
+    // play a local song if the user sets the src attribute
+    document.getElementById('playBtn').addEventListener('click', ()=>{
+      if(!song.src){
+        alert('Puedes agregar una canción copiando un archivo mp3 junto a este HTML y editando la etiqueta <source> con su nombre (o arrastrarla al reproductor).');
+        return;
+      }
+      song.play();
+    });
+
+    // descargar HTML actual (genera un archivo con el código tal cual)
+    document.getElementById('downloadBtn').addEventListener('click', ()=>{
+      const html = '<!doctype html>\\n' + document.documentElement.outerHTML;
+      const blob = new Blob([html], {type:'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = 'regalo-confesion.html'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    // botones de elección
+    document.getElementById('acceptBtn').addEventListener('click', ()=>{
+      intro.textContent = 'Gracias... esto significa mucho. ¿Te gustaría que hablemos y veamos qué pasa?';
+      startConfetti(220);
+    });
+    document.getElementById('declineBtn').addEventListener('click', ()=>{
+      intro.textContent = 'Gracias por leerme. Entiendo y te respeto. Aquí estaré si algún día quieres hablar.';
+    });
+
+    // accessibility: allow Enter to trigger reveal when focused
+    revealBtn.addEventListener('keyup', (e)=>{ if(e.key === 'Enter') revealBtn.click(); });
+  </script>
+</body>
+</html>
