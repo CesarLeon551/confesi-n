@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Esto Está Creciendo</title>
+<style>
+/* ===== ESTILOS BASE ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Georgia', serif;
+    background: #0d0d1a;
+    color: white;
+    overflow-x: hidden;
+}
+
+canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+/* ===== SECCIONES ===== */
+.section {
+    position: absolute;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    opacity: 0;
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.section.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.content-box {
+    background: rgba(10, 10, 25, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 40px;
+    border-radius: 30px;
+    border: 1px solid rgba(212, 163, 115, 0.3);
+    max-width: 800px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(212, 163, 115, 0.2);
+    animation: floatIn 0.8s ease;
+}
+
+@keyframes floatIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+h1 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #d4a373;
+    text-shadow: 0 0 15px rgba(212, 163, 115, 0.5);
+}
+
+h2 {
+    font-size: 1.8em;
+    margin-bottom: 15px;
+    color: #e6b78b;
+}
+
+p {
+    max-width: 700px;
+    font-size: 1.4em;
+    line-height: 1.8em;
+    margin: 20px 0;
+    min-height: 200px;
+}
+
+.small-text {
+    font-size: 1.1em;
+    font-style: italic;
+    opacity: 0.8;
+}
+
+button {
+    padding: 14px 32px;
+    background: #d4a373;
+    border: none;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 1.1em;
+    font-family: 'Georgia', serif;
+    color: #0d0d1a;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    margin: 10px;
+}
+
+button:hover {
+    background: #e6b78b;
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(212, 163, 115, 0.4);
+}
+
+/* ===== NAVEGACIÓN DE ESCENAS ===== */
+.scene-nav {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    background: rgba(10, 10, 25, 0.8);
+    backdrop-filter: blur(10px);
+    padding: 15px 30px;
+    border-radius: 60px;
+    z-index: 100;
+    border: 1px solid rgba(212, 163, 115, 0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.nav-btn {
+    background: none;
+    border: none;
+    color: #d4a373;
+    font-size: 1.8em;
+    cursor: pointer;
+    padding: 0 10px;
+    transition: all 0.3s;
+}
+
+.nav-btn:hover:not(:disabled) {
+    transform: scale(1.3);
+    color: #e6b78b;
+}
+
+.nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+.scene-counter {
+    font-size: 1.1em;
+    color: white;
+    min-width: 70px;
+    text-align: center;
+}
+
+/* ===== INDICADOR DE PROGRESO ===== */
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: #d4a373;
+    transition: width 0.3s ease;
+    z-index: 1001;
+}
+
+/* ===== MINI-JUEGO ===== */
+.game-box {
+    background: rgba(212, 163, 115, 0.15);
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    margin: 30px 0;
+    border: 1px solid rgba(212, 163, 115, 0.3);
+}
+
+.game-box h3 {
+    font-size: 2em;
+    margin-bottom: 20px;
+    color: #d4a373;
+}
+
+.game-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.game-btn {
+    padding: 15px 40px;
+    font-size: 1.3em;
+    min-width: 150px;
+}
+
+/* ===== EFECTO CORAZONES ===== */
+.heart {
+    position: fixed;
+    color: #d4a373;
+    font-size: 24px;
+    pointer-events: none;
+    z-index: 999;
+    animation: fall linear forwards;
+}
+
+@keyframes fall {
+    from {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* ===== LISTA DE COSAS ===== */
+.lista-especial {
+    text-align: left;
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 15px;
+}
+
+.lista-especial li {
+    margin: 10px 0;
+    font-size: 1.2em;
+    list-style: none;
+    padding-left: 30px;
+    position: relative;
+}
+
+.lista-especial li:before {
+    content: "💛";
+    position: absolute;
+    left: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    h1 { font-size: 2em; }
+    h2 { font-size: 1.5em; }
+    p { font-size: 1.2em; }
+}
+</style>
+</head>
+<body>
+
+<!-- Barra de progreso -->
+<div class="progress-bar" id="progressBar" style="width:10%"></div>
+
+<canvas id="stars"></canvas>
+
+<!-- 🧭 NAVEGACIÓN -->
+<div class="scene-nav">
+    <button class="nav-btn" id="prevScene" disabled>←</button>
+    <span class="scene-counter" id="sceneCounter">1/10</span>
+    <button class="nav-btn" id="nextScene">→</button>
+</div>
+
+<!-- 📜 10 ESCENAS -->
+
+<!-- ESCENA 1: INICIO -->
+<div class="section visible" id="scene1">
+    <div class="content-box">
+        <h1>Hay historias que empiezan sin que uno las planee…</h1>
+        <p class="small-text">Como esta que estoy escribiendo para ti</p>
+        <button onclick="startExperience()">✨ Comenzar viaje ✨</button>
+    </div>
+    <div class="scroll-hint" style="position:absolute; bottom:200px; opacity:0.6;">↓ Desliza para explorar ↓</div>
+</div>
+
+<!-- ESCENA 2 -->
+<div class="section" id="scene2">
+    <div class="content-box">
+        <h2>Recuerdo cuando...</h2>
+        <p id="text2" class="texto-escritura"></p>
+        <p class="small-text">✨ El inicio de todo ✨</p>
+    </div>
+</div>
+
+<!-- ESCENA 3 -->
+<div class="section" id="scene3">
+    <div class="content-box">
+        <h2>Lo que siento cuando pienso en ti</h2>
+        <p id="text3" class="texto-escritura"></p>
+    </div>
+</div>
+
+<!-- ESCENA 4 -->
+<div class="section" id="scene4">
+    <div class="content-box">
+        <h2>Cosas que me encantan de ti</h2>
+        <div id="text4" class="lista-especial"></div>
+    </div>
+</div>
+
+<!-- ESCENA 5 -->
+<div class="section" id="scene5">
+    <div class="content-box">
+        <h2>Momentos que guardo en mi corazón</h2>
+        <p id="text5" class="texto-escritura"></p>
+    </div>
+</div>
+
+<!-- ESCENA 6 -->
+<div class="section" id="scene6">
+    <div class="content-box">
+        <h2>Lo que he aprendido contigo</h2>
+        <p id="text6" class="texto-escritura"></p>
+        <p class="small-text">💫 Gracias por cada enseñanza</p>
+    </div>
+</div>
+
+<!-- ESCENA 7 -->
+<div class="section" id="scene7">
+    <div class="content-box">
+        <h2>Pequeñas promesas</h2>
+        <p id="text7" class="texto-escritura"></p>
+    </div>
+</div>
+
+<!-- ESCENA 8 -->
+<div class="section" id="scene8">
+    <div class="content-box">
+        <h2>Sueños que quiero compartir</h2>
+        <p id="text8" class="texto-escritura"></p>
+        <p class="small-text">🌙 Los mejores sueños son los que se cumplen juntos</p>
+    </div>
+</div>
+
+<!-- ESCENA 9 -->
+<div class="section" id="scene9">
+    <div class="content-box">
+        <h2>Gracias por...</h2>
+        <p id="text9" class="texto-escritura"></p>
+    </div>
+</div>
+
+<!-- ESCENA 10: FINAL - VERSIÓN NEUTRAL -->
+<div class="section" id="scene10">
+    <div class="content-box">
+        <h1>Y esto sigue creciendo 💛</h1>
+        <p>Gracias por tomarte el tiempo de leer hasta aquí.</p>
+        <p class="small-text">A veces las palabras solo quieren decir: gracias por existir.</p>
+        
+        <div class="game-box">
+            <h3>¿Te gustó?</h3>
+            <div class="game-buttons">
+                <button class="game-btn" onclick="answer('si')">¡Sí! 💛</button>
+                <button class="game-btn" onclick="answer('no')">Mucho 😊</button>
+            </div>
+        </div>
+        
+        <p class="small-text">Esto es solo el comienzo...</p>
+    </div>
+</div>
+
+<audio id="music" preload="auto" loop>
+    <source src="primera-cita.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ===== CONFIGURACIÓN =====
+let currentScene = 0;
+const scenes = document.querySelectorAll('.section');
+const prevBtn = document.getElementById('prevScene');
+const nextBtn = document.getElementById('nextScene');
+const sceneCounter = document.getElementById('sceneCounter');
+const progressBar = document.getElementById('progressBar');
+
+// Música
+const music = document.getElementById('music');
+
+// Control de escritura
+let typingTimeout = null;
+let wheelTimeout = null;
+
+// ===== TEXTOS DE LAS ESCENAS =====
+const sceneTexts = {
+    2: "Siempre has sido mi lugar seguro. Mi calma en días raros. La persona a la que siempre quiero contarle todo. Desde el primer momento supe que eras especial, aunque tardé en darme cuenta. Cada día que pasa confirmo lo afortunado que soy de tenerte en mi vida.",
+
+    3: "Cuando pienso en ti, siento paz. Siento que todo puede estar bien. Como cuando después de la lluvia sale el sol y todo huele a fresco. Así me siento: renovado, vivo, en casa. Tu existencia hace que mis días tengan más color y sentido.",
+
+    4: ["Tu forma de sonreír", "Cómo te preocupas por los demás", "Tu manera de ver la vida", "Esa mirada que lo dice todo", "Tu voz cuando cuentas algo importante", "Cómo haces sentir especial a la gente", "Tu forma de reír cuando algo te gusta de verdad", "Cómo brillan tus ojos cuando hablas de lo que te apasiona"],
+
+    5: "Esa vez que reímos sin parar. Las charlas hasta tarde. Los silencios cómodos. Los mensajes inesperados. Cada momento contigo se queda guardado aquí, en mi corazón. Atesoro cada instante, cada conversación, cada risa compartida. Son pequeños tesoros que llevo conmigo siempre.",
+
+    6: "Contigo aprendí que no hace falta tener todas las respuestas. Que lo importante es caminar juntos, aunque no sepamos bien hacia dónde. Que el amor no se fuerza, simplemente crece. Como una planta que necesita cuidado, paciencia y dedicación. Y tú me has enseñado a cuidar, a esperar, a valorar.",
+
+    7: "Prometo escucharte siempre. Prometo estar en los días difíciles. Prometo celebrar tus logros como míos. Prometo ser honesto. Prometo intentarlo cada día. Prometo no rendirme cuando las cosas se pongan difíciles. Prometo elegirte una y otra vez.",
+
+    8: "Sueño con viajar juntos, con descubrir lugares nuevos, con crear rutinas que nos hagan felices. Sueño con una vida simple pero llena de momentos que valgan la pena recordar. Sueño con despertar cada día sabiendo que estás ahí. Sueño con construir algo bonito, nuestro.",
+
+    9: "Gracias por existir. Por cruzarte en mi camino. Por ser quien eres. Por cada mensaje, cada risa, cada mirada. Gracias por hacer mi vida más bonita sin siquiera intentarlo. Gracias por enseñarme tanto sin proponértelo. Gracias por ser tú, simplemente tú."
+};
+
+// ===== INICIALIZACIÓN =====
+window.addEventListener('load', () => {
+    console.log('Página cargada');
+    setupNavigation();
+    setupStars();
+    updateProgressBar();
+});
+
+// ===== NAVEGACIÓN =====
+function setupNavigation() {
+    prevBtn.addEventListener('click', () => navigateScene(-1));
+    nextBtn.addEventListener('click', () => navigateScene(1));
+    
+    window.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        
+        if (wheelTimeout) return;
+        
+        if (e.deltaY > 50) {
+            navigateScene(1);
+        } else if (e.deltaY < -50) {
+            navigateScene(-1);
+        }
+        
+        wheelTimeout = setTimeout(() => {
+            wheelTimeout = null;
+        }, 300);
+    }, { passive: false });
+    
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            navigateScene(1);
+        } else if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            navigateScene(-1);
+        }
+    });
+}
+
+function navigateScene(direction) {
+    const newScene = currentScene + direction;
+    if (newScene >= 0 && newScene < scenes.length) {
+        showScene(newScene);
+        createHeartRain(3);
+    }
+}
+
+function showScene(index) {
+    console.log('Mostrando escena:', index);
+    
+    // Cancelar escritura anterior
+    if (typingTimeout) {
+        clearTimeout(typingTimeout);
+        typingTimeout = null;
+    }
+    
+    // Cambiar escena visible
+    scenes.forEach(s => s.classList.remove('visible'));
+    scenes[index].classList.add('visible');
+    currentScene = index;
+    
+    // Actualizar UI
+    sceneCounter.textContent = `${index + 1}/${scenes.length}`;
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === scenes.length - 1;
+    updateProgressBar();
+    
+    // INICIAR ESCRITURA SEGÚN LA ESCENA
+    if (index === 1) { // Escena 2 (índice 1)
+        escribirTexto('text2', sceneTexts[2]);
+    } else if (index === 2) { // Escena 3
+        escribirTexto('text3', sceneTexts[3]);
+    } else if (index === 3) { // Escena 4 - lista
+        const element = document.getElementById('text4');
+        if (element) {
+            element.innerHTML = '<ul>' + sceneTexts[4].map(item => `<li>${item}</li>`).join('') + '</ul>';
+        }
+    } else if (index === 4) { // Escena 5
+        escribirTexto('text5', sceneTexts[5]);
+    } else if (index === 5) { // Escena 6
+        escribirTexto('text6', sceneTexts[6]);
+    } else if (index === 6) { // Escena 7
+        escribirTexto('text7', sceneTexts[7]);
+    } else if (index === 7) { // Escena 8
+        escribirTexto('text8', sceneTexts[8]);
+    } else if (index === 8) { // Escena 9
+        escribirTexto('text9', sceneTexts[9]);
+    }
+}
+
+function escribirTexto(elementId, texto) {
+    console.log('Escribiendo en:', elementId);
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.innerHTML = '';
+        typeText(element, texto, 40);
+    } else {
+        console.log('Elemento no encontrado:', elementId);
+    }
+}
+
+function updateProgressBar() {
+    const progress = ((currentScene + 1) / scenes.length) * 100;
+    progressBar.style.width = progress + '%';
+}
+
+// ===== EFECTO DE ESCRITURA =====
+function typeText(element, text, speed = 40) {
+    let i = 0;
+    
+    function write() {
+        if (i < text.length) {
+            element.innerHTML += text.charAt(i);
+            i++;
+            typingTimeout = setTimeout(write, speed);
+        } else {
+            typingTimeout = null;
+            createHeartRain(3);
+        }
+    }
+    
+    write();
+}
+
+// ===== INICIAR EXPERIENCIA =====
+function startExperience() {
+    console.log('Iniciando experiencia');
+    
+    // Intentar reproducir música automáticamente
+    music.play().catch(e => {
+        console.log('Auto-play bloqueado, esperando interacción');
+        // Algunos navegadores bloquean auto-play, pero ya tenemos el clic del botón
+        music.play();
+    });
+    
+    showScene(1); // Va a la escena 2 (índice 1)
+    createHeartRain(15);
+}
+
+// ===== CORAZONES =====
+function createHeartRain(count = 10) {
+    for (let i = 0; i < count; i++) {
+        setTimeout(() => {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '💛';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDuration = Math.random() * 2 + 2 + 's';
+            heart.style.fontSize = Math.random() * 20 + 15 + 'px';
+            document.body.appendChild(heart);
+            
+            setTimeout(() => heart.remove(), 3000);
+        }, i * 100);
+    }
+}
+
+// ===== JUEGO =====
+function answer(respuesta) {
+    if (respuesta === 'si') {
+        createHeartRain(25);
+        setTimeout(() => {
+            alert('💛 ¡Me alegra mucho! 💛');
+        }, 300);
+    } else {
+        alert('😊 ¡Gracias por llegar hasta aquí!');
+        createHeartRain(15);
+    }
+}
+
+// ===== ESTRELLAS =====
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+let stars = [];
+
+function setupStars() {
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+    
+    for (let i = 0; i < 250; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2.5,
+            speed: Math.random() * 0.5 + 0.1,
+            brightness: Math.random() * 0.5 + 0.5
+        });
+    }
+    
+    animateStars();
+}
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+
+function animateStars() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    stars.forEach(s => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${s.brightness})`;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fill();
+        
+        s.y += s.speed;
+        if (s.y > canvas.height) {
+            s.y = 0;
+            s.x = Math.random() * canvas.width;
+        }
+    });
+    
+    requestAnimationFrame(animateStars);
+}
+</script>
+</body>
+</html>
