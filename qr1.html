@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR 1</title>
+  <style>
+    /* Fuente mágica y colores antiguos */
+    @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap');
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      font-family: 'Uncial Antiqua', serif;
+      min-height: 100%;
+      background: linear-gradient(135deg, #2b2b2b, #1c1c1c);
+      color: #fdf6e3;
+      overflow-y: auto; /* permite scroll en móviles */
+    }
+
+    /* Contenedor central */
+    .container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start; /* contenido empieza desde arriba */
+      text-align: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+
+    /* Contenido tipo pergamino */
+    .content {
+      background: linear-gradient(180deg, #3b2f2f, #1c1c1c);
+      border: 2px solid #ffda6b;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 30px #ffda6b, inset 0 0 15px #ffd70033;
+      max-width: 600px;
+      width: 100%;
+      animation: fadeIn 2s ease-in-out;
+    }
+
+    /* Títulos mágicos */
+    .title {
+      font-size: 2em;
+      margin-bottom: 20px;
+      color: #ffd700;
+      text-shadow: 0 0 15px #ffd700;
+    }
+
+    /* Texto del acertijo */
+    .acertijo {
+      font-size: 1.1em;
+      line-height: 1.8;
+      color: #fdf6e3;
+      text-shadow: 0 0 5px #fff8dc55;
+    }
+
+    /* Input de la clave */
+    input[type="text"] {
+      padding: 12px;
+      width: 90%;
+      max-width: 300px;
+      border-radius: 10px;
+      border: 2px solid #ffd700;
+      font-family: 'Uncial Antiqua', serif;
+      font-size: 1em;
+      margin-top: 10px;
+      outline: none;
+      background: #2b2b2b;
+      color: #fdf6e3;
+      box-shadow: 0 0 10px #ffd70055;
+    }
+
+    /* Botón de desbloqueo */
+    button {
+      margin-top: 15px;
+      padding: 12px 25px;
+      background: #ffd700;
+      color: #1c1c1c;
+      font-weight: bold;
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #ffd700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px #ffd700;
+    }
+
+    /* Botón siguiente */
+    .next-button {
+      display: inline-block;
+      margin-top: 25px;
+      padding: 12px 25px;
+      background: #ffd700;
+      color: #1c1c1c;
+      text-decoration: none;
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #ffd700;
+      transition: all 0.3s ease;
+    }
+
+    .next-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px #ffd700;
+    }
+
+    /* Animación de aparición mágica */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+
+    /* Adaptaciones para móviles */
+    @media (max-width: 480px) {
+      .title {
+        font-size: 1.6em;
+      }
+
+      .acertijo {
+        font-size: 1em;
+      }
+
+      input[type="text"] {
+        width: 95%;
+      }
+
+      button, .next-button {
+        width: 80%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="content">
+      <h1 class="title">🔮 Hechizo activado 🔮</h1>
+      <p>Para desbloquear el acertijo, escribe el nombre de quien sostiene este QR:</p>
+      <input type="text" id="clave" placeholder="Ej: Ron Weasley" />
+      <button id="verificar">🔓 Desbloquear</button>
+
+      <!-- Acertijo oculto hasta que ingrese la clave correcta -->
+      <div id="acertijo-container" style="display:none;">
+        <h2 class="title">El Encantamiento de la Confidencia</h2>
+        <p class="acertijo">
+          No porta varita,<br>
+          pero detecta secretos como si usara <em>Legeremancia</em>.<br><br>
+          Es la lechuza que siempre llega primero<br>
+          cuando tu corazón envía señales invisibles.<br><br>
+          Comparte tus risas en el Gran Comedor de la vida,<br>
+          y guarda tus dudas en su propio Pensadero.<br><br>
+          Si quieres avanzar en este misterio,<br>
+          busca a tu bruja aliada,<br>
+          la que conoce capítulos que nadie más ha leído.
+        </p>
+        <a href="qr2.html" class="next-button">✨ Descubrir siguiente ✨</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Función para normalizar texto: minusculas + quitar acentos
+    function normalizar(texto) {
+      return texto.toLowerCase()
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "");
+    }
+
+    const boton = document.getElementById('verificar');
+    const input = document.getElementById('clave');
+    const acertijo = document.getElementById('acertijo-container');
+
+    boton.addEventListener('click', () => {
+      const valor = normalizar(input.value.trim());
+      if(valor === normalizar("Mónica")) {  // Cambiar según QR
+        acertijo.style.display = 'block';   // Revela el acertijo
+        input.style.display = 'none';       // Oculta campo de texto
+        boton.style.display = 'none';       // Oculta botón
+      } else {
+        alert("❌ Esa no es la persona correcta. ¡Intenta de nuevo!");
+        input.value = '';
+      }
+    });
+  </script>
+</body>
+</html>
