@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inicio</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&display=swap');
+
+body {
+  margin: 0;
+  font-family: 'Cinzel', serif;
+  background: linear-gradient(135deg, #1c1c1c, #2b2b2b);
+  color: #fdf6e3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  text-align: center;
+  padding: 20px;
+}
+
+.card {
+  background: linear-gradient(180deg, #3b2f2f, #1c1c1c);
+  border: 4px solid #9b59b6;
+  border-radius: 15px;
+  padding: 30px;
+  max-width: 650px;
+  width: 100%;
+  box-shadow: 0 0 40px #9b59b6, inset 0 0 15px #9b59b6aa;
+  position: relative;
+  overflow: hidden;
+}
+
+h1 {
+  color: #ffd700;
+  text-shadow: 0 0 15px #ffd700;
+}
+
+.reglas {
+  margin-top: 20px;
+  font-size: 1em;
+  line-height: 1.8;
+  color: #d8b4f8;
+  text-align: center;
+}
+
+button {
+  margin-top: 25px;
+  padding: 12px 25px;
+  background: #9b59b6;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1em;
+  cursor: pointer;
+  box-shadow: 0 0 15px #9b59b6aa;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 25px #9b59b6cc;
+}
+
+.hidden {
+  display: none;
+}
+
+.acertijo-container {
+  margin-top: 30px;
+  position: relative;
+  padding: 30px 15px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.acertijo-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("FondoMO.jpg");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1.00;
+  filter: blur(2px);
+  z-index: 0;
+}
+
+.acertijo {
+  position: relative;
+  z-index: 2;
+  line-height: 1.8;
+  font-size: 1.1em;
+  color: #b57edc;
+  text-shadow: 0 0 8px #9b59b6aa;
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.5em; }
+  .acertijo { font-size: 1em; }
+  button { width: 80%; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+
+  <h1 id="titulo">✨ Antes de comenzar ✨</h1>
+
+  <div id="intro" class="reglas">
+    Hay momentos que no se explican,
+    simplemente se sienten.<br><br>
+
+    Lo que estás a punto de descubrir
+    no es una prueba,
+    es un recorrido hecho con intención.<br><br>
+
+    Lee con calma.
+    Confía en lo que sabes.
+    Y deja que cada pista te guíe
+    hacia el final.
+  </div>
+
+  <button id="btnJugar" onclick="iniciar()">Continuar</button>
+
+  <div id="acertijo" class="acertijo-container hidden">
+    <div class="acertijo">
+      No porta varita,<br>
+      pero detecta secretos como si usara Legeremancia.<br><br>
+
+      Es la lechuza que siempre llega primero<br>
+      cuando tu corazón envía señales invisibles.<br><br>
+
+      Comparte tus risas en el Gran Comedor de la vida,<br>
+      y guarda tus dudas en su propio Pensadero.<br><br>
+
+      Si quieres comenzar esta travesía,<br>
+      busca a la primera guardiana del secreto.
+    </div>
+  </div>
+
+</div>
+
+<script>
+function iniciar() {
+  document.getElementById("acertijo").classList.remove("hidden");
+  document.getElementById("btnJugar").style.display = "none";
+  document.getElementById("intro").style.display = "none";
+  document.getElementById("titulo").style.display = "none";
+}
+</script>
+
+</body>
+</html>
