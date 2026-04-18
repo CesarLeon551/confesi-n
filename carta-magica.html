@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Una Carta Mágica para Ti</title>
+
+  <!-- Google Fonts: tipografías con carácter antiguo y romántico -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================
+       VARIABLES Y RESET GLOBAL
+    ============================================ */
+    :root {
+      --gold:        #c9a84c;
+      --gold-light:  #f0d080;
+      --gold-dark:   #7a5c1e;
+      --parchment:   #f5e6c8;
+      --parchment2:  #e8d5a3;
+      --ink:         #2a1a0a;
+      --dark-bg:     #0a0608;
+      --deep-purple: #1a0a2e;
+      --crimson:     #8b1a1a;
+      --glow:        rgba(201,168,76,0.55);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--dark-bg);
+      overflow-x: hidden;
+      font-family: 'IM Fell English', serif;
+      color: var(--parchment);
+      cursor: default;
+    }
+
+    /* ============================================
+       CANVAS DE ESTRELLAS Y PARTÍCULAS
+    ============================================ */
+    #starCanvas {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================
+       VELAS FLOTANTES
+    ============================================ */
+    .candles-wrapper {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .candle {
+      position: absolute;
+      display: flex; flex-direction: column; align-items: center;
+      animation: floatCandle linear infinite;
+    }
+
+    .candle-body {
+      width: 8px;
+      background: linear-gradient(to bottom, #f0e0b0, #d4c090, #b8a070);
+      border-radius: 2px;
+      position: relative;
+    }
+
+    .candle-wick {
+      width: 1.5px; height: 8px;
+      background: #333;
+      border-radius: 1px;
+    }
+
+    .candle-flame {
+      width: 12px; height: 18px;
+      background: radial-gradient(ellipse at 50% 80%, #fff 10%, #ffd060 40%, #ff8c00 70%, transparent 100%);
+      border-radius: 50% 50% 30% 30%;
+      filter: blur(1px);
+      animation: flicker 0.15s infinite alternate ease-in-out;
+      margin-bottom: -2px;
+    }
+
+    .candle-glow {
+      position: absolute;
+      top: -20px; left: 50%;
+      transform: translateX(-50%);
+      width: 40px; height: 40px;
+      background: radial-gradient(circle, rgba(255,200,80,0.35) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    @keyframes flicker {
+      from { transform: scaleX(1)   scaleY(1)   rotate(-2deg); opacity: 0.95; }
+      to   { transform: scaleX(0.85) scaleY(1.1) rotate( 2deg); opacity: 1;    }
+    }
+
+    @keyframes floatCandle {
+      0%   { transform: translateY(110vh) rotate(0deg); opacity: 0; }
+      5%   { opacity: 1; }
+      95%  { opacity: 1; }
+      100% { transform: translateY(-10vh) rotate(5deg); opacity: 0; }
+    }
+
+    /* ============================================
+       WRAPPER PRINCIPAL
+    ============================================ */
+    #app {
+      position: relative; z-index: 2;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 30px 20px;
+    }
+
+    /* ============================================
+       PANTALLA: overlay de entrada
+    ============================================ */
+    #screen-intro {
+      text-align: center;
+      animation: fadeIn 2s ease forwards;
+    }
+
+    .hogwarts-crest {
+      font-size: 3.5rem;
+      margin-bottom: 10px;
+      filter: drop-shadow(0 0 18px var(--gold));
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { filter: drop-shadow(0 0 12px var(--gold)); }
+      50%       { filter: drop-shadow(0 0 30px var(--gold-light)); }
+    }
+
+    .owl-line {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 4px;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 30px;
+      opacity: 0.8;
+    }
+
+    /* ============================================
+       PERGAMINO
+    ============================================ */
+    .parchment {
+      position: relative;
+      background:
+        linear-gradient(160deg, #f5e6c8 0%, #e8d5a3 40%, #dcc78a 70%, #c9b87a 100%);
+      border-radius: 6px;
+      padding: 50px 55px;
+      max-width: 680px;
+      width: 100%;
+      box-shadow:
+        0 0 0 2px var(--gold-dark),
+        0 0 0 5px rgba(201,168,76,0.15),
+        0 8px 60px rgba(0,0,0,0.8),
+        inset 0 0 40px rgba(160,120,40,0.2);
+      color: var(--ink);
+    }
+
+    /* Textura de papel */
+    .parchment::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 6px;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(160,120,40,0.06) 28px, rgba(160,120,40,0.06) 29px);
+      pointer-events: none;
+    }
+
+    /* Bordes ornamentales */
+    .parchment::after {
+      content: '';
+      position: absolute; inset: 12px;
+      border: 1px solid rgba(160,120,40,0.35);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* Esquinas decorativas */
+    .corner {
+      position: absolute;
+      width: 32px; height: 32px;
+      color: var(--gold-dark);
+      font-size: 20px;
+      line-height: 1;
+      pointer-events: none;
+    }
+    .corner.tl { top: 10px;  left: 10px;  }
+    .corner.tr { top: 10px;  right: 10px; transform: scaleX(-1); }
+    .corner.bl { bottom: 10px; left: 10px;  transform: scaleY(-1); }
+    .corner.br { bottom: 10px; right: 10px; transform: scale(-1); }
+
+    .parchment h1 {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: clamp(1.2rem, 3vw, 1.7rem);
+      color: var(--crimson);
+      text-align: center;
+      margin-bottom: 6px;
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.3);
+      line-height: 1.3;
+    }
+
+    .divider {
+      text-align: center;
+      color: var(--gold-dark);
+      font-size: 1.2rem;
+      letter-spacing: 8px;
+      margin: 12px 0 20px;
+      opacity: 0.7;
+    }
+
+    .parchment p {
+      font-family: 'IM Fell English', serif;
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      line-height: 1.85;
+      color: #2a1a0a;
+      margin-bottom: 16px;
+    }
+
+    .parchment em {
+      font-style: italic;
+      color: var(--crimson);
+    }
+
+    .parchment .signature {
+      text-align: right;
+      font-family: 'IM Fell English SC', serif;
+      font-size: 1.05rem;
+      margin-top: 24px;
+      color: var(--gold-dark);
+    }
+
+    /* ============================================
+       BOTÓN MÁGICO
+    ============================================ */
+    .btn-magic {
+      display: block;
+      margin: 32px auto 0;
+      padding: 14px 38px;
+      background: linear-gradient(135deg, #1a0a2e, #2d1050);
+      color: var(--gold-light);
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      letter-spacing: 2px;
+      border: 1px solid var(--gold);
+      border-radius: 3px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(201,168,76,0.25), inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+
+    .btn-magic::before {
+      content: '';
+      position: absolute; top: 50%; left: -60%;
+      width: 40%; height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255,230,120,0.3), transparent);
+      transform: translateY(-50%) skewX(-20deg);
+      transition: left 0.5s ease;
+    }
+
+    .btn-magic:hover::before { left: 130%; }
+    .btn-magic:hover {
+      box-shadow: 0 0 35px rgba(201,168,76,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    /* ============================================
+       PANTALLA: ACERTIJO
+    ============================================ */
+    #screen-riddle { display: none; }
+
+    .riddle-box {
+      background: rgba(10,6,8,0.9);
+      border: 1px solid var(--gold);
+      border-radius: 4px;
+      padding: 44px 50px;
+      max-width: 640px;
+      width: 100%;
+      text-align: center;
+      box-shadow:
+        0 0 0 4px rgba(201,168,76,0.08),
+        0 8px 60px rgba(0,0,0,0.9),
+        inset 0 0 60px rgba(50,10,90,0.3);
+      animation: fadeIn 1s ease forwards;
+    }
+
+    .riddle-title {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: clamp(1rem, 2.5vw, 1.35rem);
+      color: var(--gold);
+      margin-bottom: 8px;
+      text-shadow: 0 0 20px var(--glow);
+    }
+
+    .riddle-subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      color: rgba(201,168,76,0.5);
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .riddle-poem {
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      line-height: 2.1;
+      color: #e8d5a3;
+      margin-bottom: 28px;
+      text-shadow: 0 0 8px rgba(201,168,76,0.15);
+      border-left: 2px solid rgba(201,168,76,0.3);
+      padding-left: 20px;
+      text-align: left;
+    }
+
+    .riddle-hint {
+      font-family: 'Cinzel', serif;
+      font-size: 0.8rem;
+      color: rgba(201,168,76,0.6);
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    .riddle-input-wrap {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .riddle-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--gold);
+      border-radius: 3px;
+      padding: 12px 20px;
+      color: var(--parchment);
+      font-family: 'IM Fell English', serif;
+      font-size: 1rem;
+      width: 260px;
+      outline: none;
+      transition: box-shadow 0.3s;
+    }
+
+    .riddle-input:focus {
+      box-shadow: 0 0 18px rgba(201,168,76,0.35);
+    }
+
+    .riddle-input::placeholder { color: rgba(201,168,76,0.35); }
+
+    .btn-reveal {
+      padding: 12px 28px;
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-family: 'Cinzel', serif;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 3px;
+      transition: all 0.3s;
+    }
+    .btn-reveal:hover {
+      background: rgba(201,168,76,0.15);
+      color: var(--gold-light);
+    }
+
+    .riddle-error {
+      margin-top: 14px;
+      color: var(--crimson);
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      opacity: 0;
+      transition: opacity 0.4s;
+    }
+    .riddle-error.show { opacity: 1; }
+
+    /* ============================================
+       PANTALLA: SORPRESA FINAL
+    ============================================ */
+    #screen-final { display: none; }
+
+    .final-box {
+      max-width: 700px;
+      width: 100%;
+      text-align: center;
+      animation: revealFinal 1.5s ease forwards;
+    }
+
+    @keyframes revealFinal {
+      0%   { opacity: 0; transform: scale(0.85) translateY(30px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .final-stars {
+      font-size: 2.5rem;
+      margin-bottom: 16px;
+      filter: drop-shadow(0 0 20px var(--gold));
+      animation: spinGlow 4s linear infinite;
+    }
+
+    @keyframes spinGlow {
+      0%, 100% { filter: drop-shadow(0 0 15px var(--gold)); }
+      50%       { filter: drop-shadow(0 0 35px #fff8d0); }
+    }
+
+    .final-parchment {
+      background:
+        linear-gradient(160deg, #fdf3d8 0%, #f0e0b0 50%, #e0cc90 100%);
+      border-radius: 6px;
+      padding: 55px 60px;
+      box-shadow:
+        0 0 0 3px var(--gold-dark),
+        0 0 0 8px rgba(201,168,76,0.1),
+        0 10px 80px rgba(201,168,76,0.4),
+        inset 0 0 50px rgba(180,140,50,0.15);
+      color: var(--ink);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Brillo giratorio de fondo */
+    .final-parchment::before {
+      content: '';
+      position: absolute; top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: conic-gradient(from 0deg, transparent 0%, rgba(255,230,100,0.08) 25%, transparent 50%);
+      animation: rotateBg 8s linear infinite;
+      pointer-events: none;
+    }
+
+    @keyframes rotateBg {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .final-eyebrow {
+      font-family: 'Cinzel', serif;
+      font-size: 0.7rem;
+      letter-spacing: 5px;
+      color: var(--gold-dark);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      opacity: 0.7;
+    }
+
+    .final-title {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: clamp(1.1rem, 3vw, 1.6rem);
+      color: var(--crimson);
+      margin-bottom: 20px;
+      text-shadow: 1px 1px 0 rgba(255,255,255,0.4);
+      line-height: 1.4;
+    }
+
+    .final-message {
+      font-family: 'IM Fell English', serif;
+      font-size: clamp(1rem, 2.2vw, 1.18rem);
+      line-height: 1.95;
+      margin-bottom: 20px;
+    }
+
+    .final-reveal {
+      font-family: 'Cinzel Decorative', cursive;
+      font-size: clamp(1.3rem, 3.5vw, 2rem);
+      color: var(--crimson);
+      padding: 22px 30px;
+      background: rgba(139,26,26,0.06);
+      border: 1px solid rgba(139,26,26,0.3);
+      border-radius: 4px;
+      margin: 24px 0;
+      text-shadow: 0 0 15px rgba(139,26,26,0.3);
+      line-height: 1.5;
+      animation: textGlow 2.5s ease-in-out infinite;
+    }
+
+    @keyframes textGlow {
+      0%, 100% { text-shadow: 0 0 10px rgba(139,26,26,0.3); }
+      50%       { text-shadow: 0 0 25px rgba(201,100,60,0.6); }
+    }
+
+    .final-footer {
+      font-family: 'IM Fell English', serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: #5a3a1a;
+    }
+
+    .fireworks-layer {
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none; z-index: 10;
+    }
+
+    /* ============================================
+       UTILIDADES
+    ============================================ */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hidden { display: none !important; }
+
+    /* ============================================
+       SCROLLBAR
+    ============================================ */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--dark-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dark); border-radius: 3px; }
+
+    /* ============================================
+       RESPONSIVE
+    ============================================ */
+    @media (max-width: 600px) {
+      .parchment { padding: 36px 28px; }
+      .riddle-box { padding: 32px 24px; }
+      .final-parchment { padding: 36px 26px; }
+      .riddle-poem { padding-left: 12px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================
+     CANVAS DE FONDO (ESTRELLAS + PARTÍCULAS)
+============================================ -->
+<canvas id="starCanvas"></canvas>
+
+<!-- ============================================
+     VELAS FLOTANTES
+============================================ -->
+<div class="candles-wrapper" id="candlesWrapper"></div>
+
+<!-- ============================================
+     FUEGOS ARTIFICIALES FINALES
+============================================ -->
+<canvas class="fireworks-layer hidden" id="fireworksCanvas"></canvas>
+
+<!-- ============================================
+     APLICACIÓN PRINCIPAL
+============================================ -->
+<div id="app">
+
+  <!-- PANTALLA 1: PERGAMINO INICIAL -->
+  <div id="screen-intro">
+    <div class="hogwarts-crest">⚡</div>
+    <p class="owl-line">Correo Mágico — Entregado por Lechuza Real</p>
+
+    <div class="parchment">
+      <!-- Esquinas ornamentales -->
+      <span class="corner tl">❧</span>
+      <span class="corner tr">❧</span>
+      <span class="corner bl">❧</span>
+      <span class="corner br">❧</span>
+
+      <h1>Para Ti, Mi Amor</h1>
+      <div class="divider">✦ ✦ ✦</div>
+
+      <p>
+        Dicen los magos más sabios de Hogwarts que hay encantamientos 
+        que no se aprenden en los libros. Que no habitan en las aulas 
+        ni en los pasillos de piedra, sino en ese lugar extraño 
+        que se abre en el pecho cuando alguien muy especial 
+        cruza el umbral de tu vida.
+      </p>
+      <p>
+        Hace dos meses, <em>tú cruzaste ese umbral.</em>
+      </p>
+      <p>
+        Desde entonces, el mundo huele a pergamino antiguo y a canela, 
+        los días tienen algo de mágico incluso cuando llueve, 
+        y yo — que creía conocer todos los hechizos — 
+        descubrí que aún me faltaba aprender el más poderoso de todos.
+      </p>
+      <p>
+        Dentro de esta carta duerme un secreto encantado.<br>
+        Sólo alguien con un corazón tan especial como el tuyo 
+        podrá descifrarlo.
+      </p>
+      <p>
+        <em>¿Te atreves a descubrir lo que he preparado para ti?</em>
+      </p>
+
+      <div class="signature">— Con todo mi amor ✦</div>
+
+      <button class="btn-magic" onclick="showRiddle()">
+        ✨ Descubrir el Mensaje Oculto
+      </button>
+    </div>
+  </div>
+
+  <!-- PANTALLA 2: ACERTIJO -->
+  <div id="screen-riddle">
+    <div class="riddle-box">
+      <p class="riddle-title">El Acertijo del Mago Enamorado</p>
+      <p class="riddle-subtitle">Resuelve el encantamiento para revelar el secreto</p>
+
+      <div class="riddle-poem">
+        Soy el momento que no tiene nombre,<br>
+        el instante entre el "aún no" y el "ya llegó".<br><br>
+
+        Mi primer fragmento es la suma de lo eterno:<br>
+        doce horas de luz más doce de sombra —<br>
+        juntas forman el día en que el tiempo descansa,<br>
+        en que el sol no se inclina ni hacia el alba ni hacia el ocaso.<br><br>
+
+        Mi segundo fragmento es el mes de las flores,<br>
+        el cuarto en nacer desde que el año despierta,<br>
+        cuando la primavera pronuncia su nombre<br>
+        y los cerezos florecen por amor a la tierra.<br><br>
+
+        Mi tercer fragmento es un año reciente:<br>
+        dos milenos de historia, más un cuarto de siglo<br>
+        y aún un año encima — el presente que habitamos,<br>
+        el año en que te elegí a ti como mi mundo.<br><br>
+
+        Ordena mis fragmentos como se ordena el tiempo:<br>
+        <em>primero el día, luego el mes, al final el año.</em><br><br>
+
+        Cuando los tres se unan, leerás mi secreto.
+      </div>
+
+      <p class="riddle-hint">
+        ✦ Escribe la fecha en formato: DD/MM/AAAA ✦
+      </p>
+
+      <div class="riddle-input-wrap">
+        <input
+          class="riddle-input"
+          id="riddleAnswer"
+          type="text"
+          placeholder="ej: 01/01/2026"
+          maxlength="10"
+          onkeydown="if(event.key==='Enter') checkAnswer()"
+        />
+        <button class="btn-reveal" onclick="checkAnswer()">
+          ✦ Revelar
+        </button>
+      </div>
+
+      <p class="riddle-error" id="riddleError">
+        ✗ Esa no es la fecha... El encantamiento permanece cerrado. Intenta de nuevo.
+      </p>
+    </div>
+  </div>
+
+  <!-- PANTALLA 3: MENSAJE FINAL -->
+  <div id="screen-final">
+    <div class="final-box">
+      <div class="final-stars">✨ ⚡ ✨</div>
+
+      <div class="final-parchment">
+        <span class="corner tl" style="color:var(--gold-dark)">❧</span>
+        <span class="corner tr" style="color:var(--gold-dark)">❧</span>
+        <span class="corner bl" style="color:var(--gold-dark)">❧</span>
+        <span class="corner br" style="color:var(--gold-dark)">❧</span>
+
+        <p class="final-eyebrow">✦ El Encantamiento ha sido Roto ✦</p>
+
+        <h2 class="final-title">Has descifrado el secreto,<br>mi amor</h2>
+
+        <p class="final-message">
+          Lo sabía. Solo alguien con tu magia particular podía 
+          llegar hasta aquí. Esta carta ha viajado desde el corazón 
+          hasta tus manos para revelarte algo que llevo preparando 
+          con mucha ilusión...
+        </p>
+
+        <div class="final-reveal">
+          "Este 24 de abril de 2026<br>
+          tengo preparada una<br>
+          cena muy especial para ti"
+        </div>
+
+        <p class="final-message">
+          Dos meses de magia contigo me han enseñado que 
+          los mejores hechizos no se lanzan con varita — 
+          se lanzan con una mirada, con una risa compartida, 
+          con la decisión de elegirte cada día.
+        </p>
+
+        <p class="final-footer">
+          Con todo el amor que cabe en un pergamino mágico,<br>
+          y el que no cabe también. ✦
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div><!-- fin #app -->
+
+<script>
+/* ============================================
+   CANVAS DE ESTRELLAS Y POLVO MÁGICO
+============================================ */
+(function() {
+  const canvas = document.getElementById('starCanvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, stars, dust;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  function randomRange(a, b) { return a + Math.random() * (b - a); }
+
+  function initStars() {
+    stars = Array.from({ length: 180 }, () => ({
+      x:    randomRange(0, W),
+      y:    randomRange(0, H),
+      r:    randomRange(0.4, 1.8),
+      a:    randomRange(0.2, 1),
+      da:   randomRange(0.003, 0.012) * (Math.random() > 0.5 ? 1 : -1),
+      gold: Math.random() > 0.7
+    }));
+    dust = Array.from({ length: 60 }, () => ({
+      x:  randomRange(0, W),
+      y:  randomRange(0, H),
+      vx: randomRange(-0.15, 0.15),
+      vy: randomRange(-0.2, -0.05),
+      r:  randomRange(1, 3),
+      a:  randomRange(0.1, 0.5),
+      life: randomRange(80, 200)
+    }));
+  }
+
+  function drawFrame() {
+    ctx.clearRect(0, 0, W, H);
+
+    /* Fondo degradado */
+    const bg = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+    bg.addColorStop(0, '#120820');
+    bg.addColorStop(1, '#050308');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, W, H);
+
+    /* Estrellas */
+    stars.forEach(s => {
+      s.a += s.da;
+      if (s.a >= 1 || s.a <= 0.1) s.da *= -1;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = s.gold
+        ? `rgba(201,168,76,${s.a})`
+        : `rgba(255,255,255,${s.a})`;
+      ctx.fill();
+    });
+
+    /* Polvo de oro */
+    dust.forEach(d => {
+      d.x += d.vx; d.y += d.vy; d.life--;
+      if (d.life <= 0) {
+        d.x = randomRange(0, W);
+        d.y = H + 10;
+        d.life = randomRange(80, 200);
+      }
+      const grad = ctx.createRadialGradient(d.x, d.y, 0, d.x, d.y, d.r);
+      grad.addColorStop(0, `rgba(240,200,100,${d.a})`);
+      grad.addColorStop(1, 'transparent');
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    });
+
+    requestAnimationFrame(drawFrame);
+  }
+
+  window.addEventListener('resize', () => { resize(); initStars(); });
+  resize(); initStars(); drawFrame();
+})();
+
+
+/* ============================================
+   VELAS FLOTANTES
+============================================ */
+(function() {
+  const wrapper = document.getElementById('candlesWrapper');
+  const COUNT   = 14;
+
+  function makeCandle() {
+    const candle = document.createElement('div');
+    candle.className = 'candle';
+
+    const left     = 5 + Math.random() * 90;
+    const duration = 12 + Math.random() * 16;
+    const delay    = -Math.random() * duration;
+    const height   = 28 + Math.random() * 36;
+    const opacity  = 0.6 + Math.random() * 0.4;
+
+    candle.style.cssText = `
+      left: ${left}%;
+      animation-duration: ${duration}s;
+      animation-delay: ${delay}s;
+      opacity: ${opacity};
+    `;
+
+    candle.innerHTML = `
+      <div class="candle-flame"></div>
+      <div class="candle-glow"></div>
+      <div class="candle-wick"></div>
+      <div class="candle-body" style="height:${height}px"></div>
+    `;
+
+    wrapper.appendChild(candle);
+  }
+
+  for (let i = 0; i < COUNT; i++) makeCandle();
+})();
+
+
+/* ============================================
+   NAVEGACIÓN ENTRE PANTALLAS
+============================================ */
+function showRiddle() {
+  document.getElementById('screen-intro').style.display  = 'none';
+  const riddleEl = document.getElementById('screen-riddle');
+  riddleEl.style.display = 'flex';
+  riddleEl.style.justifyContent = 'center';
+  riddleEl.style.animation = 'none';
+  setTimeout(() => {
+    riddleEl.style.animation = 'fadeIn 1s ease forwards';
+  }, 10);
+  setTimeout(() => document.getElementById('riddleAnswer').focus(), 600);
+}
+
+
+/* ============================================
+   LÓGICA DEL ACERTIJO
+   Respuestas válidas: 24/04/2026, 24-04-2026, 24 04 2026, 24042026
+============================================ */
+function normalizeDate(raw) {
+  return raw.trim().replace(/[\s\-\.]/g, '/');
+}
+
+const VALID_ANSWERS = [
+  '24/04/2026',
+  '24/4/2026',
+  '24042026',
+];
+
+function checkAnswer() {
+  const raw  = document.getElementById('riddleAnswer').value;
+  const norm = normalizeDate(raw);
+  const err  = document.getElementById('riddleError');
+
+  if (VALID_ANSWERS.includes(norm)) {
+    err.classList.remove('show');
+    showFinal();
+  } else {
+    err.classList.add('show');
+    const input = document.getElementById('riddleAnswer');
+    input.style.animation = 'none';
+    input.style.borderColor = '#8b1a1a';
+    input.style.boxShadow   = '0 0 12px rgba(139,26,26,0.4)';
+    setTimeout(() => {
+      input.style.borderColor = '';
+      input.style.boxShadow   = '';
+    }, 1500);
+  }
+}
+
+
+/* ============================================
+   PANTALLA FINAL + FUEGOS ARTIFICIALES
+============================================ */
+function showFinal() {
+  document.getElementById('screen-riddle').style.display = 'none';
+  const finalEl = document.getElementById('screen-final');
+  finalEl.style.display = 'flex';
+  finalEl.style.justifyContent = 'center';
+
+  /* Iniciar fuegos artificiales */
+  const fw = document.getElementById('fireworksCanvas');
+  fw.classList.remove('hidden');
+  launchFireworks(fw);
+}
+
+
+/* ============================================
+   FUEGOS ARTIFICIALES EN CANVAS
+============================================ */
+function launchFireworks(canvas) {
+  const ctx = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const particles = [];
+  const COLORS = [
+    '#ffd700','#c9a84c','#ff9f40','#fff','#f0d080',
+    '#e0b060','#ffb347','#fff8d0','#ffa07a','#c8a2c8'
+  ];
+
+  function spawnBurst(x, y) {
+    const hue = COLORS[Math.floor(Math.random() * COLORS.length)];
+    const count = 70 + Math.floor(Math.random() * 50);
+    for (let i = 0; i < count; i++) {
+      const angle  = (Math.PI * 2 * i) / count;
+      const speed  = 2 + Math.random() * 4;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color: hue,
+        alpha: 1,
+        radius: 1.5 + Math.random() * 2,
+        decay: 0.012 + Math.random() * 0.01
+      });
+    }
+  }
+
+  /* Lanzar ráfagas aleatorias */
+  let burstCount = 0;
+  const burstInterval = setInterval(() => {
+    const x = 80 + Math.random() * (window.innerWidth  - 160);
+    const y = 60 + Math.random() * (window.innerHeight * 0.6);
+    spawnBurst(x, y);
+    burstCount++;
+    if (burstCount >= 22) clearInterval(burstInterval);
+  }, 450);
+
+  function animate() {
+    ctx.fillStyle = 'rgba(5,3,8,0.2)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach((p, i) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.06; // gravedad
+      p.alpha -= p.decay;
+      if (p.alpha <= 0) { particles.splice(i, 1); return; }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+
+    if (burstCount < 22 || particles.length > 0) {
+      requestAnimationFrame(animate);
+    } else {
+      /* Fade out canvas */
+      let op = 1;
+      const fade = setInterval(() => {
+        op -= 0.04;
+        canvas.style.opacity = op;
+        if (op <= 0) { clearInterval(fade); canvas.classList.add('hidden'); }
+      }, 40);
+    }
+  }
+
+  animate();
+}
+
+
+/* ============================================
+   RESIZE DEL CANVAS DE FUEGOS
+============================================ */
+window.addEventListener('resize', () => {
+  const fw = document.getElementById('fireworksCanvas');
+  fw.width  = window.innerWidth;
+  fw.height = window.innerHeight;
+});
+</script>
+</body>
+</html>
